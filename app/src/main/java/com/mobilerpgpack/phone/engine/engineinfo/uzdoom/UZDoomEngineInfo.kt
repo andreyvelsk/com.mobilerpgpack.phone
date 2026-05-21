@@ -1,5 +1,6 @@
 package com.mobilerpgpack.phone.engine.engineinfo.uzdoom
 
+import android.view.Surface
 import com.mobilerpgpack.phone.engine.EngineTypes
 import com.mobilerpgpack.phone.engine.engineinfo.sdl.SDL3EngineInfo
 import com.mobilerpgpack.phone.engine.engineinfo.utils.Mod
@@ -13,6 +14,11 @@ import com.sun.jna.Native
 import org.koin.core.component.inject
 import org.koin.core.qualifier.named
 import java.io.File
+
+internal object UZDoomSecondScreenSurfaceBridge {
+    external fun setSecondScreenHudSurface(surface: Surface, width: Int, height: Int)
+    external fun clearSecondScreenHudSurface()
+}
 
 class UZDoomEngineInfo (mainEngineLib: String,
                         allLibs: Array<String>) :
@@ -114,6 +120,34 @@ class UZDoomEngineInfo (mainEngineLib: String,
     private external fun setPathToUserFolder (pathToUserFolder : String)
 
     private external fun UpdateUseOpenGLESState(useOpenGLES : Boolean)
+
+    private external fun SetSecondScreenHudEnabled(enabled: Boolean)
+
+    private external fun GetSecondScreenHudState(): String
+
+    private external fun GetSecondScreenHudFrameWidth(): Int
+
+    private external fun GetSecondScreenHudFrameHeight(): Int
+
+    private external fun CopySecondScreenHudFrame(target: IntArray, maxPixels: Int): Int
+
+    fun setSecondScreenHudEnabled(enabled: Boolean) = SetSecondScreenHudEnabled(enabled)
+
+    fun getSecondScreenHudState(): String = GetSecondScreenHudState()
+
+    fun getSecondScreenHudFrameWidth(): Int = GetSecondScreenHudFrameWidth()
+
+    fun getSecondScreenHudFrameHeight(): Int = GetSecondScreenHudFrameHeight()
+
+    fun copySecondScreenHudFrame(target: IntArray): Int = CopySecondScreenHudFrame(target, target.size)
+
+    fun setSecondScreenHudSurface(surface: Surface?, width: Int, height: Int) {
+        if (surface == null || !surface.isValid || width <= 0 || height <= 0) {
+            UZDoomSecondScreenSurfaceBridge.clearSecondScreenHudSurface()
+        } else {
+            UZDoomSecondScreenSurfaceBridge.setSecondScreenHudSurface(surface, width, height)
+        }
+    }
 
     override fun onNativeLibrariesLoaded() {
         super.onNativeLibrariesLoaded()

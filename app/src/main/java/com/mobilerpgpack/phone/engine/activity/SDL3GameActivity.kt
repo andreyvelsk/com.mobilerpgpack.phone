@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import com.mobilerpgpack.phone.engine.engineinfo.IEngineInfo
 import com.mobilerpgpack.phone.engine.engineinfo.isResourceCorrect
 import com.mobilerpgpack.phone.engine.engineinfo.mainSharedObject
+import com.mobilerpgpack.phone.engine.engineinfo.uzdoom.UZDoomEngineInfo
 import com.mobilerpgpack.phone.ui.activity.MainActivity
 import com.mobilerpgpack.phone.utils.PreferencesStorage
 import com.mobilerpgpack.phone.utils.forceLandscapeOrientation
@@ -20,6 +21,17 @@ import org.libsdl3.app.SDLActivity
 
 internal class SDL3GameActivity : SDLActivity(), KoinComponent {
     private lateinit var engineInfo : IEngineInfo
+    private val secondScreenController by lazy {
+        SecondScreenPresentationController(
+            context = this,
+            onSecondScreenActiveChanged = { enabled ->
+                (engineInfo as? UZDoomEngineInfo)?.setSecondScreenHudEnabled(enabled)
+            },
+            onSecondScreenSurfaceChanged = { surface, width, height ->
+                (engineInfo as? UZDoomEngineInfo)?.setSecondScreenHudSurface(surface, width, height)
+            },
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         MainActivity.gameActivityStarted = true
@@ -59,6 +71,7 @@ internal class SDL3GameActivity : SDLActivity(), KoinComponent {
     override fun onPause() {
         super.onPause()
         if (gameResourcesFound) {
+            secondScreenController.stop()
             engineInfo.onPause()
         }
     }
@@ -67,11 +80,13 @@ internal class SDL3GameActivity : SDLActivity(), KoinComponent {
         super.onResume()
         if (gameResourcesFound) {
             engineInfo.onResume()
+            secondScreenController.start()
         }
         forceLandscapeOrientation()
     }
 
     override fun onDestroy() {
+        secondScreenController.stop()
         super.onDestroy()
         engineInfo.onDestroy()
     }
