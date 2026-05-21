@@ -367,69 +367,120 @@ set(MONOLITH ON CACHE BOOL "" FORCE)
 set(MAKE_DLL OFF CACHE BOOL "" FORCE)
 
 set(APP_ROOT_DIR "${CMAKE_SOURCE_DIR}/app/src/main/jni")
-option(BUILD_ONLY_UZDOOM "Build only the UZDoom native engine" ON)
 
-if(BUILD_ONLY_UZDOOM)
+# ── ENGINES_TO_BUILD ──────────────────────────────────────────────────────────
+# Passed automatically by Gradle from app/build.gradle (single source of truth).
+# The default below is a fallback for direct CMake invocations without Gradle.
+# Available identifiers:
+#   UZDoom, WolfensteinRPG-RE, DoomRPG-RE, DoomIIRPG-RE, Doom64EX-Plus,
+#   DOOM64-EX-Plus-Enhanced, PsyDoom, ArxLibertatis, fteqw, widelands,
+#   Vanilla-Conquer, Classic-RBDOOM-3-BFG, perfect_dark
+# See SETUP.md § "Выбор движков для сборки" for details.
+# ─────────────────────────────────────────────────────────────────────────────
+set(ENGINES_TO_BUILD "UZDoom" CACHE STRING
+    "Semicolon-separated list of native engines to compile. Normally set by Gradle.")
+
+if("UZDoom" IN_LIST ENGINES_TO_BUILD)
     add_subdirectory("${APP_ROOT_DIR}/UZDoom")
-else()
+endif()
+
+if("WolfensteinRPG-RE" IN_LIST ENGINES_TO_BUILD)
     add_subdirectory("${APP_ROOT_DIR}/WolfensteinRPG-RE")
+endif()
+
+if("DoomRPG-RE" IN_LIST ENGINES_TO_BUILD)
     add_subdirectory("${APP_ROOT_DIR}/DoomRPG-RE")
+endif()
+
+if("DoomIIRPG-RE" IN_LIST ENGINES_TO_BUILD)
     add_subdirectory("${APP_ROOT_DIR}/DoomIIRPG-RE")
+endif()
+
+if("Doom64EX-Plus" IN_LIST ENGINES_TO_BUILD)
     add_subdirectory("${APP_ROOT_DIR}/Doom64EX-Plus")
+endif()
+
+if("DOOM64-EX-Plus-Enhanced" IN_LIST ENGINES_TO_BUILD)
     add_subdirectory("${APP_ROOT_DIR}/DOOM64-EX-Plus-Enhanced")
+endif()
+
+if("PsyDoom" IN_LIST ENGINES_TO_BUILD)
     add_subdirectory("${APP_ROOT_DIR}/PsyDoom")
-    add_subdirectory("${APP_ROOT_DIR}/UZDoom")
+endif()
+
+if("ArxLibertatis" IN_LIST ENGINES_TO_BUILD)
     add_subdirectory("${APP_ROOT_DIR}/ArxLibertatis")
+endif()
+
+if("fteqw" IN_LIST ENGINES_TO_BUILD)
     add_subdirectory("${APP_ROOT_DIR}/fteqw")
+endif()
+
+if("widelands" IN_LIST ENGINES_TO_BUILD)
     add_subdirectory("${APP_ROOT_DIR}/widelands")
+endif()
+
+if("Vanilla-Conquer" IN_LIST ENGINES_TO_BUILD)
     add_subdirectory("${APP_ROOT_DIR}/Vanilla-Conquer")
+endif()
+
+if("Classic-RBDOOM-3-BFG" IN_LIST ENGINES_TO_BUILD)
     add_subdirectory("${APP_ROOT_DIR}/Classic-RBDOOM-3-BFG/neo")
+endif()
 
+if("perfect_dark" IN_LIST ENGINES_TO_BUILD)
     set(ROM_CONFIGS jpn-final ntsc-final pal-final)
-
     foreach(ROM_ID IN LISTS ROM_CONFIGS)
-    set(BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/build_${ROM_ID}")
-    file(MAKE_DIRECTORY ${BUILD_DIR})
-    set(CACHE_FILE "${BUILD_DIR}/CMakeCache.txt")
-    set(ROMID ${ROM_ID} CACHE STRING "ROM ID" FORCE)
-    add_subdirectory("${APP_ROOT_DIR}/perfect_dark" "${BUILD_DIR}")
+        set(BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/build_${ROM_ID}")
+        file(MAKE_DIRECTORY ${BUILD_DIR})
+        set(CACHE_FILE "${BUILD_DIR}/CMakeCache.txt")
+        set(ROMID ${ROM_ID} CACHE STRING "ROM ID" FORCE)
+        add_subdirectory("${APP_ROOT_DIR}/perfect_dark" "${BUILD_DIR}")
     endforeach()
+endif()
 
+if("ArxLibertatis" IN_LIST ENGINES_TO_BUILD)
     target_include_directories(arx PRIVATE "${OPENAL_INCLUDE_DIR}/AL")
+endif()
 
+if("DoomRPG-RE" IN_LIST ENGINES_TO_BUILD)
     target_include_directories(DoomRPG PRIVATE ${SDL2_INCLUDE_DIR} ${SDL2_MIXER_INCLUDE_DIR}
-    ${SDL2_TTF_INCLUDE_DIR} ${TRANSLATOR_INCLUDE_DIR} ${FLUIDSYNTH_INCLUDE_DIR})
-
+        ${SDL2_TTF_INCLUDE_DIR} ${TRANSLATOR_INCLUDE_DIR} ${FLUIDSYNTH_INCLUDE_DIR})
     target_link_libraries(DoomRPG PRIVATE ${SDL2_LIBRARY} ${SDL2_MIXER_LIBRARY}
         ${SDL2_TTF_LIBRARY} ZLIB::ZLIB ${TRANSLATOR_LIBRARY} ${FLUIDSYNTH_LIBRARY})
+endif()
 
+if("DoomIIRPG-RE" IN_LIST ENGINES_TO_BUILD)
     target_include_directories(DoomIIRPG PRIVATE "${OPENAL_INCLUDE_DIR}/AL" ${SDL2_INCLUDE_DIR}
         ${SDL2_TTF_INCLUDE_DIR} ${TRANSLATOR_INCLUDE_DIR})
-
     target_link_libraries(DoomIIRPG PRIVATE ${SDL2_LIBRARY} ${SDL2_TTF_LIBRARY} ZLIB::ZLIB
         ${OPENAL_LIBRARY} ${TRANSLATOR_LIBRARY})
+endif()
 
+if("WolfensteinRPG-RE" IN_LIST ENGINES_TO_BUILD)
     target_include_directories(WolfensteinRPG PRIVATE "${OPENAL_INCLUDE_DIR}" ${SDL2_INCLUDE_DIR}
         ${SDL2_TTF_INCLUDE_DIR} ${TRANSLATOR_INCLUDE_DIR})
-
     target_link_libraries(WolfensteinRPG PRIVATE ${SDL2_LIBRARY} ${SDL2_TTF_LIBRARY} ZLIB::ZLIB
          ${OPENAL_LIBRARY} ${TRANSLATOR_LIBRARY})
+endif()
 
+if("Doom64EX-Plus" IN_LIST ENGINES_TO_BUILD)
     target_include_directories(DOOM64 PRIVATE ${SDL3_INCLUDE_DIR} ${libpng_INCLUDE_DIRS}
         ${FMOD_INC_DIR})
-
     target_link_libraries(DOOM64 PRIVATE ${SDL3_LIBRARY} ${libpng_LIBRARY}
-        ${FMOD_LIB} ZLIB::ZLIB m log )
+        ${FMOD_LIB} ZLIB::ZLIB m log)
+endif()
 
-    target_include_directories(DOOM64-Enhanced PRIVATE  ${SDL3_INCLUDE_DIR} ${libpng_INCLUDE_DIRS}
+if("DOOM64-EX-Plus-Enhanced" IN_LIST ENGINES_TO_BUILD)
+    target_include_directories(DOOM64-Enhanced PRIVATE ${SDL3_INCLUDE_DIR} ${libpng_INCLUDE_DIRS}
         ${FMOD_INC_DIR})
-
     target_link_libraries(DOOM64-Enhanced PRIVATE ${SDL3_LIBRARY} ${libpng_LIBRARY}
-        ${FMOD_LIB} ZLIB::ZLIB m log )
+        ${FMOD_LIB} ZLIB::ZLIB m log)
+endif()
 
+if("PsyDoom" IN_LIST ENGINES_TO_BUILD)
     target_include_directories(PsyDoom PRIVATE ${SDL2_INCLUDE_DIR})
     target_link_libraries(PsyDoom PRIVATE ${SDL2_LIBRARY})
-
     target_include_directories(VulkanGL PRIVATE ${SDL2_INCLUDE_DIR})
     target_link_libraries(VulkanGL PRIVATE ${SDL2_LIBRARY})
 endif()

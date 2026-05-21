@@ -165,8 +165,9 @@ class SettingsScreen : ComposeScreen(SCREEN_NAME) {
 
         ListPreferenceItem(
             stringResource(R.string.active_engine),
-            activeEngine) { newValue ->
-            preferencesStorage.setActiveEngineValue(newValue)
+            activeEngine.toString(),
+            EngineTypes.ENABLED_ENGINES.map { it.toString() }) { newValue ->
+            preferencesStorage.setActiveEngineValue(enumValueOf<EngineTypes>(newValue))
         }
 
         DrawHorizontalDivider()

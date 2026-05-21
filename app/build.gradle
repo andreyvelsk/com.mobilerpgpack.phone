@@ -23,6 +23,54 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+// ── ENGINES_TO_BUILD ──────────────────────────────────────────────────────────
+// Single source of truth. Edit this list to control:
+//   • which native engines are compiled (passed to CMake)
+//   • which engines appear in the UI dropdown (passed to Kotlin via BuildConfig)
+//   • which asset directories are included in the APK
+//
+// Available names (Kotlin EngineTypes enum):
+//   UZDoom, WolfensteinRpg, DoomRpg, Doom2Rpg, Doom64ExPlus,
+//   Doom64ExPlusEnhanced, PsyDoom, PerfectDark, ArxLibertatis,
+//   FTEQW, Widelands, VanillaConquer, Classic_RBDOOM_3_BFG
+// ─────────────────────────────────────────────────────────────────────────────
+def ENGINES_TO_BUILD = ["UZDoom"]
+
+// Kotlin EngineType name → CMake subdirectory name
+def ENGINE_CMAKE_DIR = [
+    "WolfensteinRpg"       : "WolfensteinRPG-RE",
+    "DoomRpg"              : "DoomRPG-RE",
+    "Doom2Rpg"             : "DoomIIRPG-RE",
+    "Doom64ExPlus"         : "Doom64EX-Plus",
+    "Doom64ExPlusEnhanced" : "DOOM64-EX-Plus-Enhanced",
+    "PsyDoom"              : "PsyDoom",
+    "UZDoom"               : "UZDoom",
+    "PerfectDark"          : "perfect_dark",
+    "ArxLibertatis"        : "ArxLibertatis",
+    "FTEQW"                : "fteqw",
+    "Widelands"            : "widelands",
+    "VanillaConquer"       : "Vanilla-Conquer",
+    "Classic_RBDOOM_3_BFG" : "Classic-RBDOOM-3-BFG",
+]
+
+// Kotlin EngineType name → asset subdirectories under assets/game_files/
+def ENGINE_ASSETS = [
+    "UZDoom"               : ["uzdoom"],
+    "WolfensteinRpg"       : ["com.codelobster", "opus-ct2-en-ru"],
+    "DoomRpg"              : ["com.codelobster", "opus-ct2-en-ru"],
+    "Doom2Rpg"             : ["com.codelobster", "opus-ct2-en-ru"],
+    "Doom64ExPlus"         : ["doom64ex-plus"],
+    "Doom64ExPlusEnhanced" : ["doom64ex-plus-enhanced"],
+    "Classic_RBDOOM_3_BFG" : ["doombfa"],
+    "ArxLibertatis"        : ["ArxLibertatis"],
+    "Widelands"            : ["widelands"],
+]
+
+def cmakeEnginesArg    = ENGINES_TO_BUILD.collect { ENGINE_CMAKE_DIR[it] ?: it }.join(";")
+def allAssetDirs       = ENGINE_ASSETS.values().flatten().toSet()
+def neededAssetDirs    = ENGINES_TO_BUILD.collectMany { ENGINE_ASSETS.get(it) ?: [] }.toSet()
+def assetsIgnorePattern = (allAssetDirs - neededAssetDirs).collect { "!${it}" }.join(":")
+
 android {
     namespace 'com.mobilerpgpack.phone'
     compileSdk {
@@ -70,9 +118,12 @@ android {
             abiFilters = abi_filters
         }
 
+        buildConfigField "String", "ENGINES_TO_BUILD", "\"${ENGINES_TO_BUILD.join(',')}\""
+
         externalNativeBuild {
             cmake {
-                arguments "-DANDROID_PLATFORM=android-${versions.native_android_platform_version}",
+                arguments "-DENGINES_TO_BUILD=${cmakeEnginesArg}",
+                        "-DANDROID_PLATFORM=android-${versions.native_android_platform_version}",
                         "-DCMAKE_CXX_FLAGS=${build_flags.CMAKE_CXXFLAGS} -fno-builtin -U_FORTIFY_SOURCE -fno-delete-null-pointer-checks " +
                                 "-fno-strict-aliasing -Wno-c++11-narrowing -Wno-format-security -w",
                         "-DCMAKE_C_FLAGS=${build_flags.CMAKE_CFLAGS} -fno-builtin -U_FORTIFY_SOURCE -fno-delete-null-pointer-checks " +
@@ -183,6 +234,10 @@ android {
         jniLibs {
             useLegacyPackaging true
         }
+    }
+    aaptOptions {
+        // Asset dirs for disabled engines are excluded automatically based on ENGINES_TO_BUILD.
+        if (assetsIgnorePattern) ignoreAssetsPattern assetsIgnorePattern
     }
     buildToolsVersion versions.build_tools_version
     ndkVersion versions.ndk_version

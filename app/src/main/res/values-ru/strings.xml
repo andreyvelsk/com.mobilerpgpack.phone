@@ -38,7 +38,7 @@
     <string name="allow_to_edit_controls_in_game">Включить редактирование экранного управления в игре</string>
     <string name="custom_mouse_cursor_horizontal_offset">Cмещение курсора мыши по горизонтали</string>
     <string name="custom_mouse_cursor_vertical_offset">Cмещение курсора мыши по вертикали</string>
-    <string name="active_engine">Активная игра?</string>
+    <string name="active_engine">Активная игра</string>
     <string name="use_custom_file_picker">Использовать кастомный проводник для выбора файлов (нужно для Android TV)</string>
     <string name="start_game">Запустить игру</string>
     <string name="wolfenstein_rpg_settings">Настройки Wolfenstein RPG</string>

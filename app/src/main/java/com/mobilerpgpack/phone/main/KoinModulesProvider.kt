@@ -778,11 +778,25 @@ class KoinModulesProvider(private val context: Context) : KoinComponent  {
     }
 
     init {
-        allModules = listOf(mainModule,httpModule,translationModule,
-            composeModule, doomRpgSeriesModule, doom64RegisterModule,
-            psyDoomRegisterModule,uZDoomRegisterModule, perfectDarkKoinModule,
-            arxLibertatisKoinModule, fteQWKoinModule,widelandsKoinModule,
-            vanillaConquerKoinModule,doomBFAKoinModule)
+        val e = EngineTypes.ENABLED_ENGINES
+        allModules = buildList {
+            add(mainModule)
+            add(httpModule)
+            add(translationModule)
+            add(composeModule)
+            if (EngineTypes.WolfensteinRpg in e || EngineTypes.DoomRpg in e || EngineTypes.Doom2Rpg in e)
+                add(doomRpgSeriesModule)
+            if (EngineTypes.Doom64ExPlus in e || EngineTypes.Doom64ExPlusEnhanced in e)
+                add(doom64RegisterModule)
+            if (EngineTypes.PsyDoom in e) add(psyDoomRegisterModule)
+            if (EngineTypes.UZDoom in e) add(uZDoomRegisterModule)
+            if (EngineTypes.PerfectDark in e) add(perfectDarkKoinModule)
+            if (EngineTypes.ArxLibertatis in e) add(arxLibertatisKoinModule)
+            if (EngineTypes.FTEQW in e) add(fteQWKoinModule)
+            if (EngineTypes.Widelands in e) add(widelandsKoinModule)
+            if (EngineTypes.VanillaConquer in e) add(vanillaConquerKoinModule)
+            if (EngineTypes.Classic_RBDOOM_3_BFG in e) add(doomBFAKoinModule)
+        }
     }
 
     companion object{
