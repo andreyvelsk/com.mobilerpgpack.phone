@@ -188,7 +188,7 @@ android {
     ndkVersion versions.ndk_version
 }
 
-preBuild.dependsOn ':machine_translator:CTranslate2Proxy:build',
+preBuild.dependsOn ':machine_translator:Translator:build', ':machine_translator:CTranslate2Proxy:build',
     ':third_party:openal:build', ':third_party:fluidsynth:build',
     ':third_party:NG-GL4ES:build', ':third_party:legacy_gl4es:build',
     ':third_party:angle:build', ':third_party:libpng:build',
@@ -199,6 +199,7 @@ preBuild.dependsOn ':machine_translator:CTranslate2Proxy:build',
 dependencies {
     implementation (project(":third_party:openal"))
     implementation(project(":third_party:fluidsynth"))
+    implementation (project(":machine_translator:Translator"))
     implementation (project(":machine_translator:CTranslate2Proxy"))
     implementation (project(":third_party:libpng"))
     implementation (project(":third_party:freetype"))
