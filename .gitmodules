@@ -63,7 +63,8 @@ url=https://github.com/google/oboe.git
 url=https://github.com/sandstranger/ZMusic.git
 [submodule "app/src/main/jni/UZDoom"]
 	path = app/src/main/jni/UZDoom
-	url = https://github.com/sandstranger/UZDoom.git
+	url = https://github.com/andreyvelsk/UZDoom.git
+	branch = android-mods
 [submodule "third_party/mpg123/src/main/jni/MPG123-Android"]
 	path = third_party/mpg123/src/main/jni/MPG123-Android
 url=https://github.com/sandstranger/MPG123-Android.git
