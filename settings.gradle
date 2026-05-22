@@ -22,7 +22,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Classic Core"
+rootProject.name = "Classic Core Dualscreen"
 include ':app'
 include ':third_party:openal'
 include ':third_party:sdl3:android-project:app'

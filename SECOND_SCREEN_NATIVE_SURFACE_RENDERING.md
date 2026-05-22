@@ -1,6 +1,6 @@
 # Native Android Second-Screen Rendering
 
-This document describes the second-screen rendering architecture used to move real UZDoom-native UI rendering from the primary Android display to a physical secondary display. The staged statusbar-only checkpoint is verified flicker-free and is the baseline for future changes. The current working change renders only the real UZDoom automap on the lower screen, using the same stable timing and EGL presentation pattern as that baseline.
+This document describes the second-screen rendering architecture used to move real UZDoom-native UI rendering from the primary Android display to a physical secondary display. The staged statusbar-only checkpoint and staged map-only checkpoint were both verified flicker-free and are the baseline for future changes. The current working change renders the real UZDoom automap above the real UZDoom status bar on the lower screen, using the same stable timing and EGL presentation pattern.
 
 The important result is this: the lower screen is no longer an Android reimplementation of the HUD/map and it is no longer a `Bitmap` fed by `glReadPixels`. The secondary display receives a native Android `Surface`, UZDoom renders a real engine draw list directly into an EGL window surface backed by that `Surface`, and the primary display remains fullscreen without the status bar.
 
@@ -59,7 +59,7 @@ The final architecture keeps the frame on the GPU:
 3. Android passes the `SurfaceView`'s `Surface` to native code through JNI.
 4. Native code converts the `Surface` into an `ANativeWindow`.
 5. UZDoom's render thread creates an EGL window surface for that `ANativeWindow` using the current GL context's EGL config.
-6. UZDoom prepares the real lower-screen draw list in the original 320x200-style virtual space.
+6. UZDoom prepares the real lower-screen draw list in a virtual source matching the secondary surface size.
 7. The GLES framebuffer temporarily switches the current EGL draw/read surface to the second-screen surface.
 8. The engine draws the prepared 2D draw list into the second surface and swaps it with `eglSwapBuffers`.
 9. The previous primary EGL surface and GL state are restored before the normal primary-screen frame update continues.
@@ -297,11 +297,13 @@ else
 
 This is the cleanest way to remove the UZDoom status bar from the primary display without trying to surgically skip specific draw calls in the main 2D path.
 
-## Preparing the Real UZDoom Automap Draw List
+## Preparing the Real UZDoom Automap And Status Bar Draw List
 
-The current working lower-screen pass shows only the real UZDoom automap. It intentionally keeps the same timing and GLES presentation path as the verified statusbar-only baseline: a compact temporary `F2DDrawer`, aspect-preserving `Render2DToSecondScreen`, and a call before primary `End2DAndUpdate()`.
+The current working lower-screen pass shows the real UZDoom automap above the real `HUD_StatusBar`. It intentionally keeps the same timing and GLES presentation path as the verified statusbar-only and map-only baselines: a temporary `F2DDrawer`, `Render2DToSecondScreen`, and a call before primary `End2DAndUpdate()`.
 
-For the map, the temporary source keeps width at 320 and derives height from the secondary surface aspect ratio. On the verified device the secondary display is 1240x1080, so the map source becomes about 320x279. This avoids the top letterbox gap that a fixed 320x200 source produced on the taller lower display, without returning to the unstable full-secondary-surface drawer.
+For the map/statusbar page, the temporary source now uses the secondary surface dimensions directly. On the verified device the secondary display is 1240x1080, so the lower `F2DDrawer` also uses 1240x1080. The earlier compact 320-wide source was useful while isolating flicker, but it made automap counters and statusbar text consume too much of the lower screen.
+
+The main-screen level 2D sequence has been factored into `D_DrawLevelAutomapLayer`. `D_Display()` calls this helper for the primary screen, and `D_RenderSecondScreenMapFrame()` calls the same helper while `twod` points at the lower-screen drawer. This avoids maintaining a separate hand-built sequence for map, status bar, counters, messages, and automap-specific HUD logic.
 
 Core sequence in `D_RenderSecondScreenMapFrame`:
 
@@ -315,13 +317,15 @@ int mapSourceHeight = uzSecondScreenHudRenderHeight;
 #if ANDROID
 if (uzSecondScreenHudSurfaceWidth > 0 && uzSecondScreenHudSurfaceHeight > 0)
 {
-    mapSourceHeight = int(double(mapSourceWidth) * double(uzSecondScreenHudSurfaceHeight) / double(uzSecondScreenHudSurfaceWidth) + 0.5);
+    mapSourceWidth = uzSecondScreenHudSurfaceWidth;
+    mapSourceHeight = uzSecondScreenHudSurfaceHeight;
 }
 #endif
 
 mapDrawer.Begin(mapSourceWidth, mapSourceHeight);
 mapDrawer.ClearClipRect();
 twod = &mapDrawer;
+StatusBar->SetScale();
 if (uzSecondScreenMapStartedLevel != primaryLevel ||
     uzSecondScreenMapStartedWidth != mapSourceWidth ||
     uzSecondScreenMapStartedHeight != mapSourceHeight)
@@ -333,23 +337,25 @@ if (uzSecondScreenMapStartedLevel != primaryLevel ||
 }
 automapactive = true;
 viewactive = false;
-primaryLevel->automap->Drawer(mapSourceHeight);
+D_DrawLevelAutomapLayer(viewsec, ticFrac);
 mapDrawer.End();
 automapactive = savedAutomapActive;
 viewactive = savedViewActive;
 
 twod = savedDrawer;
+StatusBar->SetScale();
 ```
 
 Important details:
 
 - `twod` is temporarily redirected to the local drawer so automap code emits commands into the lower-screen draw list instead of the main-screen draw list.
-- The lower pass temporarily sets `automapactive = true` and `viewactive = false`, then restores both values. This produces the full automap page without putting the upper screen into automap mode.
-- `primaryLevel->automap->startDisplay()` is called only when the active level or lower source dimensions change, while `twod` points to the lower drawer. This initializes automap scale/location for the lower source dimensions without resetting zoom/pan every frame.
-- `primaryLevel->automap->Drawer(mapSourceHeight)` draws a full-height automap source. No status bar calls are made in the lower pass.
-- After drawing, `twod`, `automapactive`, and `viewactive` are restored so the main render path is left in its expected state.
+- The lower pass temporarily sets `automapactive = true` and `viewactive = false`, keeps those values through the status bar draw, then restores both values. This matches the normal main-screen path when the user opens the automap.
+- `D_DrawLevelAutomapLayer` is the single shared implementation of the main automap/statusbar 2D layer. It calls `V_DrawBlend`, `primaryLevel->automap->Drawer(...)`, and the same `StatusBar` branch that the main screen uses.
+- `primaryLevel->automap->startDisplay()` is called only when the active level or lower source dimensions change, while `twod` points to the lower drawer. This initializes automap scale/location for the lower dimensions without resetting zoom/pan every frame.
+- The helper passes `StatusBar->GetTopOfStatusbar()` to the automap drawer through the same branch used by `D_Display`, so the map remains above the status bar. The real status bar calls then draw while `automapactive` is still true, which lets `DrawAutomapHUD` and automap-specific statusbar/counter logic run exactly as it does on the main screen.
+- After drawing, `twod`, `automapactive`, `viewactive`, and `StatusBar` scale are restored so the main render path is left in its expected state.
 
-The current virtual source dimensions are:
+The 320x200 constants are now only fallback dimensions for paths without an active Android secondary surface:
 
 ```cpp
 static constexpr int uzSecondScreenHudRenderWidth = 320;
@@ -369,7 +375,7 @@ The old `Render2DToBuffer` fallback still exists below this call. It is no longe
 The second-screen render call is placed near the end of the main frame, before overlays and `End2DAndUpdate()`:
 
 ```cpp
-D_RenderSecondScreenMapFrame();
+D_RenderSecondScreenMapFrame(vp.TicFrac);
 DrawOverlays();
 End2DAndUpdate();
 ```
@@ -511,6 +517,8 @@ const bool swapped = eglSwapBuffers(display, SecondScreenEglSurface) == EGL_TRUE
 
 Do not use `glFinish()` here. `glFlush()` is enough before `eglSwapBuffers` and avoids the hard GPU/CPU synchronization that contributed to flicker and stalls in the old implementation.
 
+`Draw2D(drawer, state, x, y, width, height)` must convert `F2DDrawer::DTF_Scissor` rectangles relative to the supplied destination viewport, not through the primary `screen->ScreenToWindowX/Y` helpers. The map-only lower pass can look stable without this because it emits few clipped commands, but the real status bar, counters, messages, and SBARINFO widgets use `DTA_Clip*` heavily. If scissor still assumes the primary screen while drawing into the secondary EGL surface, the combined map/statusbar layer can clip or present inconsistently.
+
 ### Aspect and placement
 
 The implementation preserves the lower source aspect ratio inside the secondary display:
@@ -564,7 +572,7 @@ if (!swapped)
 The UZDoom Android target must link both EGL and Android native-window APIs:
 
 ```cmake
-target_link_libraries( zdoom ${PROJECT_LIBRARIES} lzma ${ZMUSIC_LIBRARIES} EGL android log )
+target_link_libraries( zdoom ${PROJECT_LIBRARIES} lzma ${ZMUSIC_LIBRARIES} EGL android )
 ```
 
 Without `android`, symbols such as `ANativeWindow_fromSurface`, `ANativeWindow_release`, and `ANativeWindow_setBuffersGeometry` may fail to link.
@@ -583,7 +591,7 @@ The new path is much shorter and stays on the render thread/GPU:
 UZDoom draw list -> same GL context -> secondary EGL window surface -> eglSwapBuffers
 ```
 
-The secondary `eglSwapBuffers` should run before the primary frame completes `End2DAndUpdate()`, matching the staged statusbar-only checkpoint that was verified on the device. The unstable changes were full-surface lower composition, present-after-primary-swap timing, and offscreen texture-present; do not reintroduce those as flicker workarounds.
+The secondary `eglSwapBuffers` should run before the primary frame completes `End2DAndUpdate()`, matching the staged statusbar-only checkpoint that was verified on the device. The unstable changes were present-after-primary-swap timing and offscreen texture-present; do not reintroduce those as flicker workarounds. Full-surface lower source is valid after the clipping/scissor issue is fixed.
 
 Benefits:
 
@@ -772,6 +780,7 @@ For UZDoom specifically:
 
 ```text
 screenblocks=12 removes status bar from upper screen.
-F2DDrawer + primaryLevel->automap->Drawer(mapSourceHeight) creates the exact lower automap page.
-Render2DToSecondScreen presents the compact aspect-matched lower source directly to the lower display with aspect preservation.
+F2DDrawer + D_DrawLevelAutomapLayer creates the exact lower automap/statusbar page.
+StatusBar->CallDraw(...) runs through the same helper as the main automap page.
+Render2DToSecondScreen presents the full-surface lower source directly to the lower display.
 ```
