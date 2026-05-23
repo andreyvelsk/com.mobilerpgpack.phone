@@ -243,6 +243,35 @@ android {
     ndkVersion versions.ndk_version
 }
 
+// AGP 9.x injects android:testOnly="true" into release manifests.
+// Patch ALL manifest intermediates after each manifest-related task completes.
+def patchTestOnlyInManifests = { buildDir ->
+    ["merged_manifest", "merged_manifests", "packaged_manifests"].each { dir ->
+        def root = new File(buildDir, "intermediates/${dir}")
+        if (root.exists()) {
+            root.eachFileRecurse { f ->
+                if (f.name == "AndroidManifest.xml" && f.text.contains('android:testOnly="true"')) {
+                    f.text = f.text.replace('android:testOnly="true"', 'android:testOnly="false"')
+                    println "Patched testOnly=false: ${f}"
+                }
+            }
+        }
+    }
+}
+
+tasks.configureEach { task ->
+    if (task.name ==~ /process(Fdroid|Google)(Release|Debug)(Main)?Manifest(ForPackage)?/) {
+        task.doLast { patchTestOnlyInManifests(buildDir) }
+    }
+}
+
+gradle.taskGraph.afterTask { task, state ->
+    if (task.project == project &&
+        task.name ==~ /process(Fdroid|Google)(Release|Debug)(Main)?Manifest(ForPackage)?/) {
+        patchTestOnlyInManifests(project.buildDir)
+    }
+}
+
 preBuild.dependsOn ':machine_translator:Translator:build', ':machine_translator:CTranslate2Proxy:build',
     ':third_party:openal:build', ':third_party:fluidsynth:build',
     ':third_party:NG-GL4ES:build', ':third_party:legacy_gl4es:build',
