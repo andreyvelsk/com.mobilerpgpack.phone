@@ -1,3 +1,9 @@
+> **This is a fork of [sandstranger/com.mobilerpgpack.phone](https://github.com/sandstranger/com.mobilerpgpack.phone).**
+>
+> This fork adds second screen support for the **UZDoom** engine. Other engines have been excluded — they will be added once second screen support is implemented for each of them.
+>
+> Tested and built specifically for the **Ayn Thor**.
+
 # Unofficial ports of Doom 1,2, Wolfenstein RPG, Doom64 EX Plus, PsyDoom, UZDoom, Perfect Dark, Arx Libertatis, FTEQW, Widelands, Vanilla-Conquer, Classic-RBDOOM-3-BFG for Android
 This is an Android ports of Doom 1,2, Wolfenstein RPG, Doom64 EX Plus, PsyDoom, UZDoom, Perfect Dark, Arx Libertatis, FTEQW, Widelands, Vanilla-Conquer,
 Classic-RBDOOM-3-BFG projects found here:
