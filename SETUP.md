@@ -199,6 +199,41 @@ Flags:
 - `-r` — reinstall, keeping app data
 - `-d` — allow version downgrade
 
+### Release build
+
+```bash
+./gradlew assembleFdroidRelease -Pandroid.injected.build.abi=arm64-v8a
+```
+
+The signed APK is placed at:
+```
+app/build/intermediates/apk/fdroid/release/
+```
+
+Signing config is read from `release-keystore.properties` in the project root (not committed to git).  
+Example contents:
+```properties
+storeFile=../../mobilerpgpack-dualscreen-keystore.jks
+storePassword=<password>
+keyAlias=sign-key
+keyPassword=<password>
+```
+
+#### Install the release APK on a device
+
+```bash
+# Find the latest APK
+ls -t app/build/intermediates/apk/fdroid/release/*.apk | head -1
+
+# Install (no -t flag needed for release APKs)
+adb install -r "$(ls -t app/build/intermediates/apk/fdroid/release/*.apk | head -1)"
+```
+
+> **Note:** If the device already has a debug build installed, uninstall it first (different signing key):
+> ```bash
+> adb uninstall com.mobilerpgpack.phone.dualscreen
+> ```
+
 ---
 
 ## 10. Run on an emulator (without a real device)
