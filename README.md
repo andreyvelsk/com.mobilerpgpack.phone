@@ -1,3 +1,5 @@
+[![Available in Obtainium](https://img.shields.io/badge/Available%20in-Obtainium-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/ImranR98/Obtainium)
+
 > **This is a fork of [sandstranger/com.mobilerpgpack.phone](https://github.com/sandstranger/com.mobilerpgpack.phone).**
 >
 > This fork adds second screen support for the **UZDoom** engine. Other engines have been excluded — they will be added once second screen support is implemented for each of them.
