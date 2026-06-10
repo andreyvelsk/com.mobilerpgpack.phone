@@ -123,6 +123,8 @@ class UZDoomEngineInfo (mainEngineLib: String,
 
     private external fun SetSecondScreenHudEnabled(enabled: Boolean)
 
+    private external fun SetSecondScreenSwapEnabled(enabled: Boolean)
+
     private external fun GetSecondScreenHudState(): String
 
     private external fun GetSecondScreenHudFrameWidth(): Int
@@ -131,7 +133,15 @@ class UZDoomEngineInfo (mainEngineLib: String,
 
     private external fun CopySecondScreenHudFrame(target: IntArray, maxPixels: Int): Int
 
-    fun setSecondScreenHudEnabled(enabled: Boolean) = SetSecondScreenHudEnabled(enabled)
+    fun setSecondScreenHudEnabled(enabled: Boolean) {
+        // Push the "swap screens" preference before enabling so the native render
+        // path can pick the correct target. This is only relevant when a real second
+        // screen is present, so it never affects the single-screen startup path.
+        if (enabled) {
+            SetSecondScreenSwapEnabled(preferencesStorage.swapSecondScreen.value == true)
+        }
+        SetSecondScreenHudEnabled(enabled)
+    }
 
     fun getSecondScreenHudState(): String = GetSecondScreenHudState()
 

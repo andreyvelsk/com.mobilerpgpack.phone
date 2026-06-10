@@ -14,9 +14,13 @@ class UZDoomPreferenceStorage : PreferencesStorage() {
 
     val uzDoomGLESVersionPrefsKey = stringPreferencesKey("uzdoom_gles_version")
 
+    val swapSecondScreenPrefsKey = booleanPreferencesKey("uzdoom_swap_second_screen")
+
     val pathToUZDoomIWadFile = getStringValue(pathToUZDoomIWadFilePrefsKey)
 
     val enableLightShaders = getBooleanValue(enableLightShadersPrefsKey)
+
+    val swapSecondScreen = getBooleanValue(swapSecondScreenPrefsKey, false)
 
     val uzDoomGLESVersion = getStringValue(
         uzDoomGLESVersionPrefsKey,

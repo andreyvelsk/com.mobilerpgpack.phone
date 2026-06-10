@@ -119,6 +119,13 @@ class UZDoomComposeSettings : IEngineUIController, KoinComponent {
 
         DrawHorizontalDivider()
 
+        SwitchPreferenceItem(
+            stringResource(R.string.uzdoom_swap_second_screen),
+            preferencesStorage.swapSecondScreen,
+            preferencesStorage.swapSecondScreenPrefsKey.name)
+
+        DrawHorizontalDivider()
+
         PreferenceItem(stringResource(R.string.more_uzdoom_settings)) {
             navController.navigate(MORE_SETTINGS_SCREEN)
         }

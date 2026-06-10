@@ -110,7 +110,7 @@ open class PreferencesStorage : SharedPrefsRepository(), KoinComponent {
     val useFloatingStartGameButton =
         getBooleanValue(useFloatingStartGameButtonPrefsKey, !context.isTelevision)
 
-    val alwaysShowKeyboardButton = getBooleanValue(alwaysShowKeyboardButtonPrefsKey, true)
+    val alwaysShowKeyboardButton = getBooleanValue(alwaysShowKeyboardButtonPrefsKey, false)
 
     val alwaysUseFullScreenTouchMode = getBooleanValue(alwaysUseFullScreenTouchModePrefsKey, true)
 
@@ -133,7 +133,7 @@ open class PreferencesStorage : SharedPrefsRepository(), KoinComponent {
     val useSDLTTFForFontsRendering =
         getBooleanValue(useSDLTTFForFontsRenderingPrefsKey, defaultValue = false)
 
-    val hideScreenControls = getBooleanValue(hideScreenControlsPrefsKey, defaultValue = false)
+    val hideScreenControls = getBooleanValue(hideScreenControlsPrefsKey, defaultValue = true)
 
     val enableGameMachineTextTranslation =
         getBooleanValue(gamesMachineTranslationsPrefsKey, defaultValue = false)

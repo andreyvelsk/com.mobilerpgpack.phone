@@ -58,6 +58,7 @@
     <string name="uzdoom_rendering_api">渲染API</string>
     <string name="uzdoom_rendering_gles_version">OpenGL ES版本</string>
     <string name="uzdoom_autoload_widescreen">自动加载宽屏支持</string>
+    <string name="uzdoom_swap_second_screen">交换主屏幕和副屏幕</string>
     <string name="uzdoom_autoload_brightmaps">自动加载高亮贴图</string>
     <string name="uzdoom_autoload_lights">自动加载光照</string>
     <string name="more_uzdoom_settings">更多UZDoom设置</string>

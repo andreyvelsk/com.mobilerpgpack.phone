@@ -58,6 +58,7 @@
     <string name="uzdoom_rendering_gles_version">Версия OpenGL ES</string>
     <string name="uzdoom_enable_light_shaders">Включить легкие шейдеры</string>
     <string name="uzdoom_autoload_widescreen">Автозагрузка поддержки широкоэкранных режимов</string>
+    <string name="uzdoom_swap_second_screen">Поменять экраны местами</string>
     <string name="uzdoom_autoload_brightmaps">Автозагрузка карт освещения</string>
     <string name="uzdoom_autoload_lights">Автозагрузка освещения</string>
     <string name="more_uzdoom_settings">Больше настроек UZDoom</string>
